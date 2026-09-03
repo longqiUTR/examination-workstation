@@ -1,5 +1,9 @@
-import { describe, it, expect } from "vitest";
-import { generateDailyTasks, computeProgress } from "@/lib/plan";
+import { describe, it, expect, vi } from "vitest";
+import {
+  generateDailyTasks,
+  computeProgress,
+  markPlanTasksDone,
+} from "@/lib/plan";
 
 describe("generateDailyTasks", () => {
   it("按天生成任务，模块轮换", () => {
@@ -70,5 +74,87 @@ describe("computeProgress", () => {
     expect(r.total).toBe(4);
     expect(r.done).toBe(1);
     expect(r.partial).toBe(1);
+  });
+});
+
+describe("markPlanTasksDone", () => {
+  it("答对一道：doneCount +1，未达 target 仍 partial", async () => {
+    const fakePrisma = {
+      planTask: {
+        findMany: vi.fn().mockResolvedValue([
+          { id: "t1", doneCount: 1, target: { count: 3 } },
+        ]),
+        update: vi.fn().mockResolvedValue({}),
+      },
+    };
+    await markPlanTasksDone({
+      userId: "u1",
+      module: "言语",
+      now: new Date("2024-01-01T10:00:00Z"),
+      prisma: fakePrisma as any,
+    });
+    expect(fakePrisma.planTask.update).toHaveBeenCalledWith({
+      where: { id: "t1" },
+      data: { doneCount: { increment: 1 }, status: "partial" },
+    });
+  });
+
+  it("答对达到 target：状态转 done", async () => {
+    const fakePrisma = {
+      planTask: {
+        findMany: vi.fn().mockResolvedValue([
+          { id: "t1", doneCount: 2, target: { count: 3 } },
+        ]),
+        update: vi.fn().mockResolvedValue({}),
+      },
+    };
+    await markPlanTasksDone({
+      userId: "u1",
+      module: "言语",
+      now: new Date("2024-01-01T10:00:00Z"),
+      prisma: fakePrisma as any,
+    });
+    expect(fakePrisma.planTask.update).toHaveBeenCalledWith({
+      where: { id: "t1" },
+      data: { doneCount: { increment: 1 }, status: "done" },
+    });
+  });
+
+  it("已 done 的任务不会再被查到", async () => {
+    const fakePrisma = {
+      planTask: {
+        findMany: vi.fn().mockResolvedValue([]),
+        update: vi.fn(),
+      },
+    };
+    await markPlanTasksDone({
+      userId: "u1",
+      module: "言语",
+      now: new Date("2024-01-01T10:00:00Z"),
+      prisma: fakePrisma as any,
+    });
+    expect(fakePrisma.planTask.update).not.toHaveBeenCalled();
+  });
+
+  it("按当天 UTC 窗口查询 active 计划", async () => {
+    const fakePrisma = {
+      planTask: {
+        findMany: vi.fn().mockResolvedValue([]),
+        update: vi.fn(),
+      },
+    };
+    const now = new Date("2024-06-15T10:00:00Z");
+    await markPlanTasksDone({
+      userId: "u1",
+      module: "数量",
+      now,
+      prisma: fakePrisma as any,
+    });
+    const call = fakePrisma.planTask.findMany.mock.calls[0][0];
+    expect(call.where.plan).toEqual({ userId: "u1", status: "active" });
+    expect(call.where.module).toBe("数量");
+    expect(call.where.status).toEqual({ in: ["pending", "partial"] });
+    expect(call.where.date.gte.toISOString()).toBe("2024-06-15T00:00:00.000Z");
+    expect(call.where.date.lt.toISOString()).toBe("2024-06-16T00:00:00.000Z");
   });
 });

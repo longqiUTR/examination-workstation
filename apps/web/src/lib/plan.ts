@@ -61,3 +61,48 @@ export function computeProgress(tasks: ProgressTask[]): Progress {
     percentage: total > 0 ? (done + partial * 0.5) / total : 0,
   };
 }
+
+// ============ 进度回写（接入答题流程）============
+// 这里与 wrong-book 一样使用 prisma client 注入，方便 vitest 用 fake prisma 单测。
+
+import type { PrismaClient } from "@prisma/client";
+
+type PrismaLike = Pick<PrismaClient, "planTask">;
+
+export type MarkPlanTasksDoneInput = {
+  userId: string;
+  module: string;
+  /** 答题时刻；用于计算"当天 UTC 窗口"。缺省取 new Date() */
+  now?: Date;
+  prisma: PrismaLike;
+};
+
+export async function markPlanTasksDone(
+  input: MarkPlanTasksDoneInput
+): Promise<void> {
+  const now = input.now ?? new Date();
+  const todayUtc = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  );
+  const tomorrowUtc = new Date(todayUtc.getTime() + 86400000);
+
+  const planTasks = await input.prisma.planTask.findMany({
+    where: {
+      plan: { userId: input.userId, status: "active" },
+      module: input.module,
+      date: { gte: todayUtc, lt: tomorrowUtc },
+      status: { in: ["pending", "partial"] },
+    },
+    select: { id: true, doneCount: true, target: true },
+  });
+
+  for (const t of planTasks) {
+    const target = t.target as { count?: number } | null;
+    const targetCount = target?.count ?? 0;
+    const newStatus = t.doneCount + 1 >= targetCount ? "done" : "partial";
+    await input.prisma.planTask.update({
+      where: { id: t.id },
+      data: { doneCount: { increment: 1 }, status: newStatus },
+    });
+  }
+}
