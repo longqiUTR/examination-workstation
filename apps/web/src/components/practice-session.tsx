@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { submitAnswer } from "@/server/actions/attempt";
+import { saveNote } from "@/server/actions/wrong";
 import { cn } from "@/lib/utils";
 
 type Option = { key: string; value: string };
@@ -26,9 +27,13 @@ type Result = {
 export function PracticeSession({
   questions,
   sessionId,
+  initialNote = "",
+  enableNotes = false,
 }: {
   questions: QuestionLite[];
   sessionId: string;
+  initialNote?: string;
+  enableNotes?: boolean;
 }) {
   const [idx, setIdx] = useState(0);
   const [selected, setSelected] = useState<string>("");
@@ -36,6 +41,9 @@ export function PracticeSession({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const startTimeRef = useRef<number>(0);
+  const [note, setNote] = useState<string>(initialNote);
+  const [noteMsg, setNoteMsg] = useState<string | null>(null);
+  const [notePending, setNotePending] = useState(false);
 
   // 切题时重置并重新计时
   useEffect(() => {
@@ -120,6 +128,19 @@ export function PracticeSession({
 
   function handleNext() {
     setIdx(idx + 1);
+  }
+
+  async function handleSaveNote() {
+    setNoteMsg(null);
+    setNotePending(true);
+    try {
+      await saveNote(q.id, note);
+      setNoteMsg("笔记已保存");
+    } catch (e) {
+      setNoteMsg(e instanceof Error ? e.message : "保存失败");
+    } finally {
+      setNotePending(false);
+    }
   }
 
   return (
@@ -212,6 +233,30 @@ export function PracticeSession({
               <p className="whitespace-pre-wrap text-sm leading-relaxed">
                 {result.analysis}
               </p>
+            </Card>
+          )}
+
+          {enableNotes && (
+            <Card className="p-4">
+              <h4 className="font-bold mb-2">我的笔记</h4>
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="写下你的理解/易错点..."
+                className="w-full min-h-24 rounded border border-input bg-transparent p-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
+              />
+              <div className="flex items-center gap-2 mt-2">
+                <Button
+                  size="sm"
+                  onClick={handleSaveNote}
+                  disabled={notePending}
+                >
+                  {notePending ? "保存中…" : "保存笔记"}
+                </Button>
+                {noteMsg && (
+                  <span className="text-xs text-muted-foreground">{noteMsg}</span>
+                )}
+              </div>
             </Card>
           )}
 

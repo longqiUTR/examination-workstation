@@ -24,6 +24,10 @@ export default async function MistakeRedoPage({
     },
   });
 
+  const wrong = await prisma.wrongQuestion.findUnique({
+    where: { userId_questionId: { userId: session.user.id, questionId: params.id } },
+  });
+
   return (
     <PracticeSession
       questions={[
@@ -37,6 +41,8 @@ export default async function MistakeRedoPage({
         },
       ]}
       sessionId={study.id}
+      initialNote={wrong?.notes ?? ""}
+      enableNotes
     />
   );
 }

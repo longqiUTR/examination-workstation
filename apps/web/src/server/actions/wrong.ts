@@ -21,3 +21,15 @@ export async function listWrongQuestions(filter: ListWrongFilter = {}) {
     orderBy: [{ mastered: "asc" }, { lastWrongAt: "desc" }],
   });
 }
+
+export async function saveNote(questionId: string, note: string) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+  return prisma.wrongQuestion.update({
+    where: {
+      userId_questionId: { userId: session.user.id, questionId },
+    },
+    data: { notes: note },
+  });
+}
+
