@@ -16,6 +16,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "考公工作台",
   description: "行测刷题 + 错题本 + 学习计划",
+  manifest: "/manifest.webmanifest",
+  themeColor: "#000000",
+  appleWebApp: {
+    capable: true,
+    title: "考工",
+    statusBarStyle: "default",
+  },
 };
 
 export default function RootLayout({
@@ -25,9 +32,18 @@ export default function RootLayout({
 }) {
   return (
     <html
-      lang="en"
+      lang="zh-CN"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <link rel="manifest" href="/manifest.webmanifest" />
+        <meta name="theme-color" content="#000000" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function (e) { console.warn('SW register failed', e); }); }); }`,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">
         <NextAuthSessionProvider>{children}</NextAuthSessionProvider>
       </body>
