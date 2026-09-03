@@ -1,4 +1,5 @@
 "use server";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { judge, type QuestionType } from "@/lib/judge";
@@ -23,7 +24,7 @@ type SessionStats = {
 
 export async function submitAnswer(input: SubmitInput) {
   const session = await auth();
-  if (!session?.user?.id) throw new Error("Unauthorized");
+  if (!session?.user?.id) redirect("/login");
 
   const q = await prisma.question.findUnique({ where: { id: input.questionId } });
   if (!q) throw new Error("Question not found");

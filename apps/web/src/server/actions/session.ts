@@ -1,4 +1,5 @@
 "use server";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import type { Prisma } from "@prisma/client";
@@ -12,7 +13,7 @@ export type StartSessionInput = {
 
 export async function startSession(input: StartSessionInput) {
   const session = await auth();
-  if (!session?.user?.id) throw new Error("Unauthorized");
+  if (!session?.user?.id) redirect("/login");
 
   const where: Prisma.QuestionWhereInput = {};
   if (input.modules?.length) where.module = { in: input.modules };

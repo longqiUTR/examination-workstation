@@ -1,4 +1,5 @@
 "use server";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 
@@ -9,7 +10,7 @@ export type ListWrongFilter = {
 
 export async function listWrongQuestions(filter: ListWrongFilter = {}) {
   const session = await auth();
-  if (!session?.user?.id) throw new Error("Unauthorized");
+  if (!session?.user?.id) redirect("/login");
 
   return prisma.wrongQuestion.findMany({
     where: {
@@ -24,7 +25,7 @@ export async function listWrongQuestions(filter: ListWrongFilter = {}) {
 
 export async function saveNote(questionId: string, note: string) {
   const session = await auth();
-  if (!session?.user?.id) throw new Error("Unauthorized");
+  if (!session?.user?.id) redirect("/login");
   return prisma.wrongQuestion.update({
     where: {
       userId_questionId: { userId: session.user.id, questionId },
