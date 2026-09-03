@@ -38,6 +38,8 @@ export default async function MistakeRedoPage({
           stem: question.stem,
           options: (question.options as { key: string; value: string }[] | null) ?? null,
           difficulty: question.difficulty,
+          answer: question.answer,
+          analysis: question.analysis,
         },
       ]}
       sessionId={study.id}

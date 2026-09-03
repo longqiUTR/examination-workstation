@@ -42,6 +42,8 @@ export default async function PracticePage({
           stem: q.stem,
           options: Array.isArray(q.options) ? (q.options as Option[]) : null,
           difficulty: q.difficulty,
+          answer: q.answer,
+          analysis: q.analysis,
         }))}
         sessionId={sessionId}
       />
@@ -70,6 +72,8 @@ export default async function PracticePage({
         stem: q.stem,
         options: Array.isArray(q.options) ? (q.options as Option[]) : null,
         difficulty: q.difficulty,
+        answer: q.answer,
+        analysis: q.analysis,
       }))}
       sessionId={sessionId}
     />

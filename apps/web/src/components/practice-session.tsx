@@ -6,6 +6,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { submitAnswer } from "@/server/actions/attempt";
 import { saveNote } from "@/server/actions/wrong";
+import { cacheQuestion } from "@/lib/question-cache";
 import { cn } from "@/lib/utils";
 
 type Option = { key: string; value: string };
@@ -16,6 +17,8 @@ type QuestionLite = {
   stem: string;
   options: Option[] | null;
   difficulty: number;
+  answer?: string;
+  analysis?: string | null;
 };
 
 type Result = {
@@ -52,6 +55,22 @@ export function PracticeSession({
     setError(null);
     startTimeRef.current = Date.now();
   }, [idx]);
+
+  // 把当前题写入 IndexedDB（仅在 result 出来时带 answer/analysis，可用于离线重读）
+  useEffect(() => {
+    const q = questions[idx];
+    if (!q) return;
+    cacheQuestion({
+      id: q.id,
+      module: q.module,
+      type: q.type,
+      stem: q.stem,
+      options: q.options,
+      difficulty: q.difficulty,
+      answer: q.answer,
+      analysis: q.analysis,
+    }).catch((e) => console.warn("cacheQuestion failed", e));
+  }, [idx, questions, result]);
 
   if (questions.length === 0) {
     return (
