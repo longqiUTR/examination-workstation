@@ -2,6 +2,7 @@
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { judge, type QuestionType } from "@/lib/judge";
+import { updateOnWrong, updateOnCorrect } from "@/lib/wrong-book";
 import { revalidatePath } from "next/cache";
 import type { Prisma } from "@prisma/client";
 
@@ -38,6 +39,13 @@ export async function submitAnswer(input: SubmitInput) {
       mode: input.mode,
     },
   });
+
+  // 错题归集：答错调 updateOnWrong，答对调 updateOnCorrect
+  if (!isCorrect) {
+    await updateOnWrong(session.user.id, input.questionId, prisma);
+  } else {
+    await updateOnCorrect(session.user.id, input.questionId, prisma);
+  }
 
   // 更新 StudySession.stats
   const study = await prisma.studySession.findUnique({
