@@ -1,0 +1,164 @@
+// 考公工作台 v1 Prisma schema
+// 来源: docs/superpowers/specs/2026-09-04-exam-work-station-design.md §6.1
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ============ 用户与认证 ============
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  imageUrl      String?
+  preferences   Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  attempts       Attempt[]
+  wrongQuestions WrongQuestion[]
+  studySessions  StudySession[]
+  plans          Plan[]
+}
+
+// ============ 考试元信息 ============
+
+enum ExamType {
+  GUO_KAO
+  SHENG_KAO
+  SHI_YE_BIAN
+  XUAN_TIAO
+  GONG_AN
+  OTHER
+}
+
+model Exam {
+  id        String    @id
+  name      String
+  type      ExamType
+  year      Int?
+  province  String?
+
+  questions Question[]
+}
+
+// ============ 题目 ============
+
+model Question {
+  id          String   @id @default(cuid())
+  examId      String
+  module      String
+  type        String
+  stem        String
+  options     Json?
+  answer      String
+  analysis    String?
+  difficulty  Int
+  tags        String[]
+  source      String
+  year        Int?
+  verified    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  exam         Exam           @relation(fields: [examId], references: [id])
+  attempts     Attempt[]
+  wrongEntries WrongQuestion[]
+
+  @@index([examId, module])
+  @@index([tags])
+}
+
+// ============ 答题记录 ============
+
+model Attempt {
+  id          String   @id @default(cuid())
+  userId      String
+  questionId  String
+  userAnswer  String
+  isCorrect   Boolean
+  durationMs  Int
+  mode        String
+  createdAt   DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id])
+  question Question @relation(fields: [questionId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([userId, questionId])
+}
+
+// ============ 错题本 ============
+
+model WrongQuestion {
+  id           String    @id @default(cuid())
+  userId       String
+  questionId   String
+  wrongCount   Int       @default(1)
+  correctCount Int       @default(0)
+  lastWrongAt  DateTime  @default(now())
+  mastered     Boolean   @default(false)
+  masteredAt   DateTime?
+  notes        String?
+
+  user     User     @relation(fields: [userId], references: [id])
+  question Question @relation(fields: [questionId], references: [id])
+
+  @@unique([userId, questionId])
+  @@index([userId, mastered])
+}
+
+// ============ 练习 Session ============
+
+model StudySession {
+  id        String    @id @default(cuid())
+  userId    String
+  mode      String
+  config    Json
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+  stats     Json?
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// ============ 个人计划 ============
+
+model Plan {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  targetExam  String
+  startDate   DateTime
+  endDate     DateTime
+  status      String
+  aiGenerated Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user  User       @relation(fields: [userId], references: [id])
+  tasks PlanTask[]
+
+  @@index([userId, status])
+}
+
+model PlanTask {
+  id        String   @id @default(cuid())
+  planId    String
+  date      DateTime
+  module    String
+  target    Json
+  status    String
+  doneCount Int      @default(0)
+  note      String?
+
+  plan Plan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@index([planId, date])
+  @@index([date, status])
+}
