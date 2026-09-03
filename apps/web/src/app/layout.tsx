@@ -18,7 +18,11 @@ export const metadata: Metadata = {
   description: "行测刷题 + 错题本 + 学习计划",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
       lang="en"
