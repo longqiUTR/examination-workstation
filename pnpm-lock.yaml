@@ -77,6 +77,9 @@ importers:
 
   packages/db:
     dependencies:
+      '@exam/importer':
+        specifier: workspace:*
+        version: link:../importer
       '@prisma/client':
         specifier: ^5.20.0
         version: 5.22.0(prisma@5.22.0)
