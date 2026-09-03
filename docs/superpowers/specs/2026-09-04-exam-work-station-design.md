@@ -52,7 +52,7 @@
 |---|---|
 | 题库 | **粉笔** 公开真题：国考行测 5 模块种子数据（5 模块各 ≥50 题）；schema 支持多考试扩展 |
 | 练习 | 逐题模式：题干 + 选项 + 客观题自动判分 + 答案解析 + 笔记 |
-| 错题 | 自动归集 + 重做 + "答对 1 次即标记掌握"（可配置） |
+| 错题 | 自动归集 + 重做 + **答对 3 次即标记掌握**（v1 硬编码，暂不暴露给用户） |
 | 统计 | 基础统计：做题量、正确率、模块分布、每日趋势 |
 | 计划 | **手动** 个人计划：建计划 + 每日 PlanTask + 自动 mark done（关联 Attempt） |
 | 进度 | 学习进度可视化：计划完成度、日历视图、模块进度、错题趋势 |
@@ -277,13 +277,15 @@ model Attempt {
 // ============ 错题本（独立聚合表） ============
 
 model WrongQuestion {
-  id          String   @id @default(cuid())
-  userId      String
-  questionId  String
-  wrongCount  Int      @default 1
-  lastWrongAt DateTime @default(now())
-  mastered    Boolean  @default false
-  notes       String?
+  id           String   @id @default(cuid())
+  userId       String
+  questionId   String
+  wrongCount   Int      @default 1      // 累计答错次数
+  correctCount Int      @default 0      // 累计重做答对次数，达到 3 触发 mastered
+  lastWrongAt  DateTime @default(now())
+  mastered     Boolean  @default false
+  masteredAt   DateTime?               // 标记掌握的时间
+  notes        String?
 
   user        User     @relation(fields: [userId], references: [id])
   question    Question @relation(fields: [questionId], references: [id])
@@ -373,9 +375,11 @@ model PlanTask {
 
 ### 7.2 错题自动归集
 
-- 答错 → 异步写/更新 `WrongQuestion`（按 `userId+questionId` 唯一）
-- 重做答对 N 次（v1 默认 1 次，可在设置改）→ `mastered = true`
+- 答错 → 异步写/更新 `WrongQuestion`（按 `userId+questionId` 唯一，`wrongCount + 1`，`correctCount = 0`）
+- 重做答对 → `correctCount + 1`
+- `correctCount >= 3` → `mastered = true, masteredAt = now()`（**v1 阈值硬编码为 3，不暴露用户配置**）
 - 错题本页支持：未掌握 / 最近错误 / 已掌握 / 按模块筛选
+- 答对 3 次后用户也可以手动"重置错题"（v1 不做，v2+ 考虑）
 
 ### 7.3 手动计划流程
 
@@ -564,10 +568,12 @@ packages/importer/src/fenbi-import.ts
 ## 14. 待定 / 后续讨论
 
 - [x] 题目导入的数据源：**粉笔**公开真题（v1 限定，v2 扩展）
-- [ ] 错题"答对几次算掌握"的默认值（v1 用 1 次，是否暴露给用户配置）
-- [ ] v1 是否需要"收藏夹"功能（与错题本区别）
-- [ ] 移动端是否需要"声音 / 振动反馈"（答对/答错）
-- [ ] 数据导出格式（v1 是否支持导出 JSON / CSV）
+- [x] 错题"答对几次算掌握"：**3 次**（v1 硬编码，不暴露给用户配置；v1.1 视情况暴露）
+- [x] 收藏夹：**v1 不做**（v2+ 视情况补）
+- [x] 移动端声音 / 振动反馈：**v1 不做**
+- [x] 数据导出：**v1 不做**（v1.1 视情况补 JSON / CSV）
+
+> 所有待定项已决。如 v1 后期有变动，再开 issue 讨论。
 
 ---
 
