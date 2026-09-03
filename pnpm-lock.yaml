@@ -19,6 +19,9 @@ importers:
       '@exam/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@prisma/client':
+        specifier: ^5.20.0
+        version: 5.22.0(prisma@5.22.0)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
