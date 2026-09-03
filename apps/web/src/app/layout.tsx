@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { NextAuthSessionProvider } from "@/components/session-provider";
+import { SyncBootstrap } from "@/components/sync-bootstrap";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -45,7 +46,10 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col">
-        <NextAuthSessionProvider>{children}</NextAuthSessionProvider>
+        <NextAuthSessionProvider>
+          <SyncBootstrap />
+          {children}
+        </NextAuthSessionProvider>
       </body>
     </html>
   );

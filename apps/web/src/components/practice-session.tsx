@@ -6,7 +6,9 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { submitAnswer } from "@/server/actions/attempt";
 import { saveNote } from "@/server/actions/wrong";
-import { cacheQuestion } from "@/lib/question-cache";
+import { cacheQuestion, isOfflineMode } from "@/lib/question-cache";
+import { enqueue } from "@/lib/outbox";
+import { judge, type QuestionType } from "@/lib/judge";
 import { cn } from "@/lib/utils";
 
 type Option = { key: string; value: string };
@@ -131,6 +133,30 @@ export function PracticeSession({
     setError(null);
     startTransition(async () => {
       try {
+        // 离线模式：本地判分 + 入队，联网后由 sync 同步
+        if (await isOfflineMode()) {
+          if (!q.answer) {
+            setError("离线且该题未缓存完整答案，无法本地判分");
+            return;
+          }
+          const isCorrect = judge(q.type as QuestionType, selected, q.answer);
+          await enqueue({
+            type: "attempt",
+            payload: {
+              questionId: q.id,
+              userAnswer: selected,
+              durationMs: Date.now() - startTimeRef.current,
+              mode: "逐题",
+              sessionId,
+            },
+          });
+          setResult({
+            isCorrect,
+            correctAnswer: q.answer,
+            analysis: q.analysis ?? null,
+          });
+          return;
+        }
         const r = await submitAnswer({
           questionId: q.id,
           userAnswer: selected,

@@ -6,6 +6,7 @@ import {
   cacheQuestion as _cache,
   getRecentQuestions as _recent,
   getCachedQuestion as _one,
+  isOfflineMode as _offline,
   type CachedQuestion,
 } from "./offline-db";
 
@@ -21,4 +22,8 @@ export async function getRecentQuestions() {
 
 export async function getCachedQuestion(id: string) {
   return _one(id);
+}
+
+export async function isOfflineMode() {
+  return _offline();
 }
