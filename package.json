@@ -1,0 +1,14 @@
+{
+  "name": "exam-work-station",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter @exam/web dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "db:migrate": "pnpm --filter @exam/db prisma migrate dev",
+    "db:seed": "pnpm --filter @exam/db seed"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "engines": { "node": ">=20.0.0" }
+}
