@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>个人公考工作台</title>
+<style>
+  :root{
+    --primary:#3B6EF5;--primary-light:#9BBBF4;--primary-bg:rgba(59,110,245,0.08);
+    --bg:#F5F7FA;--card:#FFFFFF;--text:#1A1B1C;--text2:#5C6670;--border:#E4E3DD;
+    --green:#2E9E5B;--orange:#D9820B;--red:#C93A44;--radius:14px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:-apple-system,'PingFang SC','Microsoft YaHei','Segoe UI','Helvetica Neue',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.55;}
+  .app{display:flex;min-height:100vh;}
+  svg{display:inline-block;vertical-align:middle;}
+  /* ===== 侧边栏 ===== */
+  .sidebar{width:220px;background:var(--card);border-right:1px solid var(--border);padding:18px 12px;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto;}
+  .logo{display:flex;align-items:center;gap:9px;padding:4px 8px 18px;font-weight:700;font-size:16px;}
+  .logo-badge{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--primary),#7AA1F8);color:#fff;display:flex;align-items:center;justify-content:center;}
+  .logo-badge svg{width:18px;height:18px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:var(--text2);cursor:pointer;margin-bottom:2px;font-size:14px;text-decoration:none;user-select:none;}
+  .nav-item:hover{background:#F0F4FE;color:var(--primary);}
+  .nav-item.active{background:var(--primary-bg);color:var(--primary);font-weight:600;}
+  .nav-item svg{width:18px;height:18px;flex-shrink:0;}
+  .main{flex:1;min-width:0;padding:22px 26px;max-width:1180px;}
+  /* ===== 顶栏 ===== */
+  .topbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;}
+  .topbar h1{font-size:21px;font-weight:700;}
+  .topbar .sub{color:var(--text2);font-size:13px;margin-top:2px;}
+  .top-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .countdown{background:linear-gradient(135deg,var(--primary),#7AA1F8);color:#fff;padding:10px 18px;border-radius:12px;font-size:13px;box-shadow:0 4px 14px rgba(59,110,245,.25);}
+  .countdown b{font-size:22px;margin:0 4px;}
+  .btn{display:inline-flex;align-items:center;gap:6px;border:none;cursor:pointer;font-size:13.5px;font-weight:600;border-radius:10px;padding:9px 16px;font-family:inherit;}
+  .btn-primary{background:var(--primary);color:#fff;}
+  .btn-primary:hover{background:#2F5FD8;}
+  .btn-ghost{background:#fff;color:var(--primary);border:1px solid var(--primary);}
+  .btn-ghost:hover{background:var(--primary-bg);}
+  .btn-sm{padding:6px 12px;font-size:12.5px;border-radius:8px;}
+  .btn-success{background:var(--green);color:#fff;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  /* ===== 卡片 ===== */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;}
+  .card-title{font-size:15px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+  .tag{font-size:11px;color:var(--text2);background:#F1F2F4;border-radius:6px;padding:2px 8px;font-weight:400;}
+  .demo{font-size:11px;color:var(--orange);}
+  /* ===== KPI ===== */
+  .kpi-grid{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:16px;}
+  .kpi{flex:1 1 170px;min-width:0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;}
+  .kpi .k-label{font-size:12px;color:var(--text2);}
+  .kpi .k-val{font-size:24px;font-weight:700;margin-top:4px;color:var(--primary);}
+  .kpi .k-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+  .grid-2{display:flex;flex-wrap:wrap;gap:16px;}
+  .grid-2 > .card{flex:1 1 360px;min-width:0;}
+  /* ===== 条形图 ===== */
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .bar-label{width:64px;font-size:13px;color:var(--text2);flex-shrink:0;}
+  .bar-track{flex:1;height:12px;background:#EEF0F4;border-radius:8px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,var(--primary-light),var(--primary));}
+  .bar-val{width:58px;text-align:right;font-size:13px;font-weight:600;flex-shrink:0;}
+  /* ===== 待办 ===== */
+  .todo{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dashed var(--border);}
+  .todo:last-child{border-bottom:none;}
+  .todo .cb{width:20px;height:20px;border:2px solid var(--primary);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;flex-shrink:0;background:#fff;}
+  .todo.done .cb{background:var(--green);border-color:var(--green);}
+  .todo.done .t-text{color:#AEB4BC;text-decoration:line-through;}
+  .todo .t-text{flex:1;font-size:13.5px;}
+  .todo .t-meta{font-size:12px;color:var(--text2);flex-shrink:0;}
+  .todo .t-del{color:#C0C6CE;cursor:pointer;font-size:14px;padding:2px 6px;flex-shrink:0;}
+  .todo .t-del:hover{color:var(--red);}
+  .t-tag{font-size:11px;border-radius:6px;padding:2px 8px;flex-shrink:0;}
+  .t-changshi{background:#FEF3E2;color:#B25E09;}
+  .t-yanyu{background:#E6F0FE;color:#1D63D8;}
+  .t-shuliang{background:#FCE8EA;color:#C93A44;}
+  .t-panduan{background:#EAF6EC;color:#2E8B47;}
+  .t-ziliao{background:#F1EDFD;color:#6D4DD6;}
+  .t-shenlun{background:#E8F7F5;color:#1E8C80;}
+  .add-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+  .add-row input[type=text]{flex:1 1 180px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13.5px;font-family:inherit;min-width:0;}
+  .add-row select{padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:#fff;font-family:inherit;}
+  /* ===== 阶段 ===== */
+  .stage{margin-bottom:12px;}
+  .stage .s-head{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;align-items:center;gap:8px;flex-wrap:wrap;}
+  .stage .s-track{height:10px;background:#EEF0F4;border-radius:6px;overflow:hidden;}
+  .stage .s-fill{height:100%;border-radius:6px;}
+  .stage.active .s-name{font-weight:700;}
+  .stage .s-pct{font-weight:600;}
+  /* ===== 模块卡 ===== */
+  .mod-grid{display:flex;flex-wrap:wrap;gap:12px;}
+  .mod{flex:1 1 190px;min-width:0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;cursor:pointer;transition:.15s;}
+  .mod:hover{border-color:var(--primary);box-shadow:0 4px 14px rgba(59,110,245,.12);}
+  .mod .m-name{font-weight:600;font-size:14px;}
+  .mod .m-rate{font-size:22px;font-weight:700;margin-top:8px;color:var(--primary);}
+  .mod .m-meta{font-size:12px;color:var(--text2);margin-top:2px;}
+  .mod .m-btn{margin-top:12px;display:inline-block;background:var(--primary);color:#fff;font-size:12.5px;padding:6px 14px;border-radius:8px;}
+  /* ===== 表单 ===== */
+  .form-grid{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;}
+  .field{display:flex;flex-direction:column;gap:4px;min-width:0;}
+  .field label{font-size:12px;color:var(--text2);}
+  .field input,.field select,.field textarea{padding:8px 11px;border:1px solid var(--border);border-radius:8px;font-size:13.5px;font-family:inherit;background:#fff;}
+  .field textarea{resize:vertical;min-height:56px;}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--primary-light);border-color:var(--primary);}
+  /* ===== 错题 ===== */
+  .filter{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+  .filter .f{font-size:12.5px;padding:6px 12px;border-radius:20px;background:#fff;border:1px solid var(--border);cursor:pointer;color:var(--text2);}
+  .filter .f.on{background:var(--primary);color:#fff;border-color:var(--primary);}
+  .mistake{padding:12px 0;border-bottom:1px dashed var(--border);}
+  .mistake:last-child{border-bottom:none;}
+  .mistake .m-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
+  .mistake .m-q{font-size:13.5px;flex:1;min-width:200px;}
+  .mistake .m-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center;}
+  .m-tag{font-size:11px;border-radius:6px;padding:2px 8px;}
+  .m-cuxin{background:#FCE8EA;color:#C93A44;}
+  .m-fangfa{background:#FEF3E2;color:#B25E09;}
+  .m-mangqu{background:#FCE8EA;color:#C93A44;}
+  .m-kp{background:#EAF6EC;color:#2E8B47;}
+  .m-solved{background:#E8F7F5;color:#1E8C80;}
+  .m-actions{display:flex;gap:8px;flex-shrink:0;}
+  .retry-btn{font-size:12px;color:var(--primary);border:1px solid var(--primary);border-radius:8px;padding:4px 12px;cursor:pointer;background:#fff;}
+  .retry-btn:hover{background:var(--primary);color:#fff;}
+  .del-btn{font-size:12px;color:var(--red);border:1px solid var(--red);border-radius:8px;padding:4px 10px;cursor:pointer;background:#fff;}
+  .del-btn:hover{background:var(--red);color:#fff;}
+  .empty{padding:26px 10px;text-align:center;color:var(--text2);font-size:13.5px;}
+  /* ===== 表格 ===== */
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{padding:8px 8px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top;}
+  th{color:var(--text2);font-weight:500;font-size:12.5px;background:#FAFBFC;}
+  td input{width:100%;border:1px solid transparent;background:transparent;padding:4px 6px;border-radius:6px;font-size:12.5px;font-family:inherit;}
+  td input:hover{border-color:var(--border);background:#fff;}
+  td input:focus{outline:none;border-color:var(--primary);background:#fff;}
+  .up{color:var(--green);font-weight:600;}
+  .down{color:var(--red);font-weight:600;}
+  /* ===== 分析 ===== */
+  .anal-grid{display:flex;flex-wrap:wrap;gap:16px;align-items:stretch;}
+  .anal-grid .card{flex:1 1 340px;min-width:0;}
+  .weak{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px dashed var(--border);}
+  .weak:last-child{border-bottom:none;}
+  .weak .w-idx{width:20px;height:20px;border-radius:6px;background:var(--red);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .weak .w-idx.w2{background:var(--orange);}
+  .weak .w-idx.w3{background:var(--primary-light);color:#fff;}
+  .weak .w-name{flex:1;font-size:13.5px;}
+  .weak .w-acc{font-size:13px;color:var(--red);font-weight:600;}
+  .gap-box{text-align:center;padding:14px;}
+  .gap-num{font-size:34px;font-weight:700;color:var(--red);}
+  .gap-sub{font-size:12.5px;color:var(--text2);margin-top:4px;}
+  /* ===== 打卡 ===== */
+  .checkin-hero{display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:linear-gradient(135deg,rgba(59,110,245,0.10),rgba(155,187,244,0.20));border:1px solid rgba(59,110,245,0.25);border-radius:var(--radius);padding:16px 18px;margin-bottom:16px;}
+  .checkin-hero .ci-info{flex:1;min-width:200px;}
+  .checkin-hero .ci-title{font-size:15px;font-weight:700;}
+  .checkin-hero .ci-sub{font-size:12.5px;color:var(--text2);margin-top:3px;}
+  .checkin-hero .btn{font-size:15px;padding:12px 22px;}
+  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#1A1B1C;color:#fff;padding:10px 20px;border-radius:10px;font-size:13.5px;z-index:99;opacity:0;transition:opacity .25s;pointer-events:none;}
+  .toast.show{opacity:1;}
+  /* ===== 页面显示 ===== */
+  .page{display:none;}
+  .page.active{display:block;}
+  .demo-note{font-size:12px;color:var(--orange);background:#FFF9EC;border:1px dashed var(--orange);border-radius:10px;padding:8px 12px;margin-bottom:14px;}
+  .stat-cards{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
+  .stat-card{flex:1 1 130px;min-width:0;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;}
+  .stat-card .s-label{font-size:11.5px;color:var(--text2);}
+  .stat-card .s-val{font-size:20px;font-weight:700;margin-top:2px;}
+  .mat{flex:1 1 150px;min-width:0;background:#F8FAFD;border:1px solid var(--border);border-radius:10px;padding:12px;}
+  .mat .m-title{font-size:13px;font-weight:600;}
+  .job-grid{display:flex;flex-wrap:wrap;gap:12px;}
+  .job{flex:1 1 300px;min-width:0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
+  .job .j-name{font-weight:600;font-size:14px;}
+  .job .j-tags{display:flex;gap:6px;margin:8px 0;}
+  .job .j-tag{font-size:11px;background:var(--primary-bg);color:var(--primary);border-radius:6px;padding:2px 8px;}
+  .job .j-rows{font-size:12.5px;color:var(--text2);line-height:1.9;}
+  .job .j-rows b{color:var(--text);}
+  @media (max-width:768px){
+    .app{flex-direction:column;}
+    .sidebar{width:100%;height:auto;position:static;display:flex;flex-wrap:wrap;gap:4px;padding:10px;border-right:none;border-bottom:1px solid var(--border);}
+    .logo{width:100%;}
+    .nav-item{flex:1 1 88px;justify-content:center;padding:8px 4px;font-size:12px;flex-direction:column;gap:3px;}
+    .nav-item svg{width:16px;height:16px;}
+    .main{padding:14px;}
+    .countdown{width:100%;text-align:center;}
+    .top-actions{width:100%;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== 侧边导航 ===== -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+      <div>公考工作台</div>
+    </div>
+    <a class="nav-item" href="#/dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>总览</a>
+    <a class="nav-item" href="#/plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>备考计划</a>
+    <a class="nav-item" href="#/practice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>行测刷题</a>
+    <a class="nav-item" href="#/mistakes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>错题本</a>
+    <a class="nav-item" href="#/essay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>申论训练</a>
+    <a class="nav-item" href="#/interview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>面试训练</a>
+    <a class="nav-item" href="#/analytics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>数据分析</a>
+    <a class="nav-item" href="#/career"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>岗位研究</a>
+  </aside>
+
+  <!-- ===== 主内容 ===== -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="page-title">备考总览</h1>
+        <div class="sub" id="page-sub">一切备考，数据说话</div>
+      </div>
+      <div class="top-actions">
+        <span class="countdown">距 <span id="cd-target">2026 国考笔试</span> 还有 <b id="cd-num">--</b> 天</span>
+      </div>
+    </div>
+
+    <!-- ============ 总览 ============ -->
+    <section class="page" data-route="dashboard">
+      <div class="checkin-hero">
+        <div class="ci-info">
+          <div class="ci-title" id="ci-title">今日打卡</div>
+          <div class="ci-sub" id="ci-sub">完成学习任务即打卡，连续坚持是提分的基础</div>
+        </div>
+        <button class="btn btn-primary" id="btn-checkin">今日打卡</button>
+      </div>
+
+      <div class="kpi-grid" id="kpi-grid"></div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">行测五大模块正确率 <span class="tag">来自练习记录</span></div>
+          <div id="module-bars"></div>
+          <div id="module-hint" style="font-size:12px;color:var(--text2);margin-top:8px"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">今日待办 <span id="todo-count" class="tag"></span></div>
+          <div id="todo-list"></div>
+          <div class="add-row">
+            <input type="text" id="todo-input" placeholder="添加一项待办…">
+            <select id="todo-mod">
+              <option value="ziliao">资料</option><option value="yanyu">言语</option>
+              <option value="shuliang">数量</option><option value="panduan">判断</option>
+              <option value="changshi">常识</option><option value="shenlun">申论</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" id="btn-add-todo">添加</button>
+            <button class="btn btn-ghost btn-sm" id="btn-import-todo">导入今日计划</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">本周学习时长 <span class="tag" id="week-total"></span></div>
+        <svg id="week-chart" width="100%" viewBox="0 0 640 180" preserveAspectRatio="xMidYMid meet" style="display:block;height:auto;max-width:640px;"></svg>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" id="btn-add-30">记录学习 +30 分钟</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 计划 ============ -->
+    <section class="page" data-route="plan">
+      <div class="card">
+        <div class="card-title">备考阶段与目标 <span class="tag">阶段可切换</span></div>
+        <div class="stage" data-stage="base">
+          <div class="s-head"><span class="s-name">① 基础阶段（系统学知识点）</span><span class="s-pct">100% · 已完成</span></div>
+          <div class="s-track"><div class="s-fill" style="width:100%;background:linear-gradient(90deg,#9BBBF4,#3B6EF5)"></div></div>
+        </div>
+        <div class="stage" data-stage="strengthen">
+          <div class="s-head"><span class="s-name">② 强化阶段（分模块专项突破）</span><span class="s-pct">65% · 进行中</span></div>
+          <div class="s-track"><div class="s-fill" style="width:65%;background:linear-gradient(90deg,#9BBBF4,#3B6EF5)"></div></div>
+        </div>
+        <div class="stage" data-stage="sprint">
+          <div class="s-head"><span class="s-name">③ 冲刺阶段（套题模考 + 查漏）</span><span class="s-pct">0% · 未开始</span></div>
+          <div class="s-track"><div class="s-fill" style="width:0%;background:#E4E3DD"></div></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px;">
+          <span style="font-size:13px;color:var(--text2);">当前阶段：</span>
+          <select id="stage-select" style="padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:#fff;font-family:inherit;">
+            <option value="base">基础阶段</option>
+            <option value="strengthen">强化阶段</option>
+            <option value="sprint">冲刺阶段</option>
+          </select>
+          <span style="font-size:13px;color:var(--text2);">工作日/天(h)：</span>
+          <input type="number" id="budget-workday" style="width:64px;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:13px;" value="3" min="1" max="8">
+          <span style="font-size:13px;color:var(--text2);">周末/天(h)：</span>
+          <input type="number" id="budget-weekend" style="width:64px;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:13px;" value="6" min="1" max="10">
+          <button class="btn btn-primary btn-sm" id="btn-gen-week">一键生成本周任务</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">本周每日任务 <span class="tag" id="week-note"></span></div>
+        <div style="overflow-x:auto;">
+          <table id="week-table"></table>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-top:10px">提示：任务按当前阶段生成，可点击单元格直接编辑；数据保存在本机浏览器。</div>
+      </div>
+    </section>
+
+    <!-- ============ 刷题 ============ -->
+    <section class="page" data-route="practice">
+      <div class="card">
+        <div class="card-title">记录一次练习 <span class="tag">自动更新正确率</span></div>
+        <div class="form-grid">
+          <div class="field" style="flex:1 1 130px;">
+            <label>模块</label>
+            <select id="pr-mod">
+              <option value="changshi">常识判断</option><option value="yanyu">言语理解</option>
+              <option value="shuliang">数量关系</option><option value="panduan">判断推理</option>
+              <option value="ziliao">资料分析</option>
+            </select>
+          </div>
+          <div class="field" style="flex:1 1 80px;">
+            <label>总题数</label>
+            <input type="number" id="pr-total" min="1" max="200" placeholder="如 20">
+          </div>
+          <div class="field" style="flex:1 1 80px;">
+            <label>做对题数</label>
+            <input type="number" id="pr-correct" min="0" max="200" placeholder="如 16">
+          </div>
+          <button class="btn btn-primary" id="btn-log-practice">保存练习</button>
+        </div>
+      </div>
+
+      <div class="mod-grid" id="mod-grid"></div>
+
+      <div class="card" style="margin-top:16px;">
+        <div class="card-title">最近练习记录 <span class="tag">近 10 条</span></div>
+        <div id="pr-log"></div>
+      </div>
+    </section>
+
+    <!-- ============ 错题本 ============ -->
+    <section class="page" data-route="mistakes">
+      <div class="stat-cards" id="mistake-stats"></div>
+
+      <div class="card">
+        <div class="card-title">新增错题</div>
+        <div class="form-grid">
+          <div class="field" style="flex:1 1 110px;">
+            <label>模块</label>
+            <select id="mk-mod">
+              <option value="changshi">常识</option><option value="yanyu">言语</option>
+              <option value="shuliang">数量</option><option value="panduan">判断</option>
+              <option value="ziliao">资料</option><option value="shenlun">申论</option>
+            </select>
+          </div>
+          <div class="field" style="flex:1 1 130px;">
+            <label>知识点</label>
+            <input type="text" id="mk-kp" placeholder="如：工程问题">
+          </div>
+          <div class="field" style="flex:1 1 120px;">
+            <label>错因</label>
+            <select id="mk-reason">
+              <option value="cuxin">计算粗心</option><option value="fangfa">方法不当</option><option value="mangqu">知识盲区</option>
+            </select>
+          </div>
+          <div class="field" style="flex:1 1 220px;">
+            <label>题干 / 内容</label>
+            <input type="text" id="mk-q" placeholder="简要记录题目内容">
+          </div>
+          <button class="btn btn-primary" id="btn-add-mistake">加入错题本</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">错题列表 <span class="tag" id="mk-count"></span></div>
+        <div class="filter" id="mk-filter"></div>
+        <div id="mk-list"></div>
+      </div>
+    </section>
+
+    <!-- ============ 申论 ============ -->
+    <section class="page" data-route="essay">
+      <div class="mod-grid">
+        <div class="mod"><div class="m-name">归纳概括</div><div class="m-meta">重点练"要点齐全 + 语言精练"</div></div>
+        <div class="mod"><div class="m-name">综合分析</div><div class="m-meta">重点练"观点 + 分析逻辑"</div></div>
+        <div class="mod"><div class="m-name">提出对策</div><div class="m-meta">重点练"对策可落地"</div></div>
+        <div class="mod"><div class="m-name">贯彻执行</div><div class="m-meta">重点练"格式 + 身份代入"</div></div>
+        <div class="mod"><div class="m-name">大作文</div><div class="m-meta">重点练"立意 + 结构 + 素材"</div></div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <div class="card-title">素材库 <span class="tag">按主题分类</span></div>
+        <div class="form-grid" style="margin-bottom:14px;">
+          <div class="field" style="flex:1 1 160px;"><label>分类</label>
+            <select id="mat-cat"><option value="金句">金句</option><option value="政策">政策</option><option value="案例">案例</option><option value="时政">时政</option></select>
+          </div>
+          <div class="field" style="flex:1 1 240px;"><label>内容</label><input type="text" id="mat-text" placeholder="输入素材内容"></div>
+          <button class="btn btn-primary" id="btn-add-mat">保存素材</button>
+        </div>
+        <div class="mat-grid" id="mat-grid" style="display:flex;flex-wrap:wrap;gap:10px;"></div>
+      </div>
+    </section>
+
+    <!-- ============ 面试 ============ -->
+    <section class="page" data-route="interview">
+      <div class="mod-grid">
+        <div class="mod"><div class="m-name">综合分析</div><div class="m-meta">核心题型 · 占比最高</div></div>
+        <div class="mod"><div class="m-name">组织管理</div><div class="m-meta">活动流程 + 细节亮点</div></div>
+        <div class="mod"><div class="m-name">应急应变</div><div class="m-meta">先控场再解决</div></div>
+        <div class="mod"><div class="m-name">人际关系</div><div class="m-meta">工作为重 · 主动沟通</div></div>
+        <div class="mod"><div class="m-name">情景模拟</div><div class="m-meta">身份代入 · 有对象感</div></div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <div class="card-title">录音复盘记录 <span class="tag">建议每题 3 分钟限时作答</span></div>
+        <div class="empty">面试录音功能将随版本迭代开放，当前阶段建议使用手机录音后自评：内容结构 40% / 表达流畅 30% / 时间控制 30%。</div>
+      </div>
+    </section>
+
+    <!-- ============ 数据分析 ============ -->
+    <section class="page" data-route="analytics">
+      <div class="anal-grid">
+        <div class="card">
+          <div class="card-title">行测模块正确率 <span class="tag">来自你的练习</span></div>
+          <div id="an-bars"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">薄弱知识点 Top3 <span class="tag" id="an-total"></span></div>
+          <div id="an-weak"></div>
+          <div class="gap-box">
+            <div class="gap-num" id="an-gap">--</div>
+            <div class="gap-sub" id="an-gap-sub">距 70% 目标的差距，建议优先补正确率最低的模块</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">本周每日练习题量 <span class="tag">近 7 天</span></div>
+        <svg id="an-week" width="100%" viewBox="0 0 640 180" preserveAspectRatio="xMidYMid meet" style="display:block;height:auto;max-width:640px;"></svg>
+      </div>
+    </section>
+
+    <!-- ============ 岗位研究 ============ -->
+    <section class="page" data-route="career">
+      <div class="job-grid" id="job-grid"></div>
+      <div class="card" style="margin-top:16px;">
+        <div class="card-title">选岗策略建议 <span class="tag">专家视角</span></div>
+        <div style="font-size:13.5px;line-height:1.9;">
+          · <b>主攻国考 + 保底省考/事业编</b>：多线布局降低"一考定终身"风险。<br>
+          · 报录比低于 1:100 且进面线 ≤130 的岗位优先纳入冲刺目标。<br>
+          · 每周一次全真模考，用成绩动态校准岗位目标。<br>
+          · 岗位数据请以国家公务员局及各省人事考试网官方发布为准。
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+  /* ================= 数据层 ================= */
+  var MODS = {
+    changshi:{name:'常识判断',cls:'t-changshi'},
+    yanyu:{name:'言语理解',cls:'t-yanyu'},
+    shuliang:{name:'数量关系',cls:'t-shuliang'},
+    panduan:{name:'判断推理',cls:'t-panduan'},
+    ziliao:{name:'资料分析',cls:'t-ziliao'},
+    shenlun:{name:'申论',cls:'t-shenlun'}
+  };
+  var REASONS = {cuxin:'计算粗心',fangfa:'方法不当',mangqu:'知识盲区'};
+  var WEEKDAYS = ['周一','周二','周三','周四','周五','周六','周日'];
+  var KEY = 'gk_workbench_v1';
+
+  function pad(n){return n<10?'0'+n:''+n;}
+  function todayStr(){
+    var d=new Date();
+    return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  }
+  function daysAgoStr(n){
+    var d=new Date();d.setDate(d.getDate()-n);
+    return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  }
+  function defaultState(){
+    return {
+      settings:{examName:'2026 国考笔试',examDate:'2026-12-08',target:135},
+      stage:'strengthen',
+      budget:{workday:3,weekend:6},
+      todayMinutes:0,
+      checkins:[],
+      todos:[
+        {id:1,text:'资料分析限时训练 20 题',mod:'ziliao',done:false,manual:true},
+        {id:2,text:'言语理解 · 逻辑填空 30 题',mod:'yanyu',done:false,manual:true}
+      ],
+      week:[],
+      practice:{changshi:{q:186,c:115},yanyu:{q:342,c:267},shuliang:{q:210,c:116},panduan:{q:388,c:287},ziliao:{q:264,c:214}},
+      practiceLog:[
+        {date:daysAgoStr(1),mod:'ziliao',total:20,correct:16},
+        {date:daysAgoStr(2),mod:'yanyu',total:30,correct:24},
+        {date:daysAgoStr(3),mod:'shuliang',total:15,correct:8},
+        {date:daysAgoStr(4),mod:'panduan',total:25,correct:19},
+        {date:daysAgoStr(5),mod:'changshi',total:20,correct:13},
+        {date:daysAgoStr(6),mod:'ziliao',total:20,correct:17}
+      ],
+      mistakes:[
+        {id:1,date:daysAgoStr(2),mod:'shuliang',kp:'工程问题',q:'某工程甲 12 天完成、乙 18 天完成，合作 3 天后甲独做还需几天？',reason:'cuxin',solved:false},
+        {id:2,date:daysAgoStr(3),mod:'changshi',kp:'文学常识',q:'"润物细无声"出自哪位诗人？',reason:'mangqu',solved:false},
+        {id:3,date:daysAgoStr(4),mod:'yanyu',kp:'逻辑填空',q:'经典之所以成为经典，是因为经得起时间的（　　）。',reason:'fangfa',solved:true}
+      ],
+      mats:[
+        {id:1,cat:'金句',text:'功成不必在我，功成必定有我'},
+        {id:2,cat:'政策',text:'新质生产力 · 高质量发展'},
+        {id:3,cat:'案例',text:'浙江"千万工程"20 年实践'},
+        {id:4,cat:'时政',text:'2026 政府工作报告要点'}
+      ],
+      weekMinutes:[120,150,90,140,120,180,150]
+    };
+  }
+
+  var state;
+  function load(){
+    try{
+      var raw=localStorage.getItem(KEY);
+      if(raw){state=JSON.parse(raw);return;}
+    }catch(e){}
+    state=defaultState();
+  }
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+  function esc(s){
+    return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  var _tid=0;
+  function nid(){return Date.now()*1000+(++_tid);}
+  function toast(msg){
+    var t=document.getElementById('toast');
+    t.textContent=msg;t.classList.add('show');
+    clearTimeout(t._h);t._h=setTimeout(function(){t.classList.remove('show');},1800);
+  }
+
+  /* ================= 计算 ================= */
+  function pct(q,c){return q?Math.round(c/q*1000)/10:0;}
+  function calcStreak(){
+    var set={};state.checkins.forEach(function(d){set[d]=1;});
+    var n=0,start=set[todayStr()]?0:1;
+    for(var i=start;i<3660;i++){
+      var s=daysAgoStr(i);
+      if(set[s])n++;else break;
+    }
+    return n;
+  }
+  function thisWeekQ(){
+    var sum=0,now=new Date();
+    state.practiceLog.forEach(function(l){
+      var d=new Date(l.date+'T00:00:00');
+      var diff=Math.floor((now-d)/86400000);
+      if(diff>=0&&diff<7)sum+=l.total;
+    });
+    return sum;
+  }
+  function avgAcc(){
+    var q=0,c=0;
+    Object.keys(state.practice).forEach(function(k){q+=state.practice[k].q;c+=state.practice[k].c;});
+    return q?pct(q,c):0;
+  }
+  function diffDays(examDate){
+    var d=new Date(examDate+'T00:00:00'),now=new Date();
+    return Math.max(0,Math.ceil((d-now)/86400000));
+  }
+  function modAcc(mod){var p=state.practice[mod];return pct(p.q,p.c);}
+
+  /* ================= 任务生成 ================= */
+  var STAGE_TEMPLATES = {
+    base: [
+      {am:'行测模块精讲 1 节',pm:'常识判断专项 20 题',eve:'知识点梳理 + 错题'},
+      {am:'行测模块精讲 1 节',pm:'言语理解专项 25 题',eve:'成语积累 + 错题'},
+      {am:'行测模块精讲 1 节',pm:'数量关系专项 15 题',eve:'公式整理 + 错题'},
+      {am:'行测模块精讲 1 节',pm:'判断推理专项 25 题',eve:'思维导图 + 错题'},
+      {am:'行测模块精讲 1 节',pm:'资料分析专项 15 题',eve:'速算技巧 + 错题'},
+      {am:'申论小题精讲 1 节',pm:'归纳概括精练 1 篇',eve:'素材积累 30 分钟'},
+      {am:'本周知识复盘',pm:'行测套题半程',eve:'下周计划安排'}
+    ],
+    strengthen: [
+      {am:'资料分析专项 20 题',pm:'资料错题复盘',eve:'申论概括精练 1 篇'},
+      {am:'言语理解专项 30 题',pm:'语句排序 + 填空',eve:'申论综合分析 1 篇'},
+      {am:'数量关系专项 15 题',pm:'工程/行程专题',eve:'错题本重做'},
+      {am:'判断推理专项 25 题',pm:'图形/类比专题',eve:'申论提出对策 1 篇'},
+      {am:'常识时政积累',pm:'行测套题半程',eve:'错题本重做'},
+      {am:'行测全真模考',pm:'模考复盘',eve:'休息调整'},
+      {am:'申论整套训练',pm:'申论批改自评',eve:'下周计划'}
+    ],
+    sprint: [
+      {am:'行测全真模考(限时)',pm:'模考逐题复盘',eve:'错题清零'},
+      {am:'行测全真模考(限时)',pm:'薄弱模块加练',eve:'错题清零'},
+      {am:'行测全真模考(限时)',pm:'模考复盘',eve:'申论金句背诵'},
+      {am:'行测全真模考(限时)',pm:'薄弱模块加练',eve:'错题清零'},
+      {am:'行测全真模考(限时)',pm:'全科复盘',eve:'考前状态调整'},
+      {am:'申论整套模考',pm:'申论复盘',eve:'面试理论回顾'},
+      {am:'全科查漏补缺',pm:'易错点过一遍',eve:'调整作息早睡'}
+    ]
+  };
+  function genWeek(){
+    var tpl=STAGE_TEMPLATES[state.stage]||STAGE_TEMPLATES.strengthen;
+    state.week=tpl.map(function(t,i){
+      return {day:WEEKDAYS[i],am:t.am,pm:t.pm,eve:t.eve,done:false};
+    });
+    save();renderAll();
+  }
+
+  /* ================= 路由 ================= */
+  var TITLES={
+    dashboard:['备考总览','一切备考，数据说话'],
+    plan:['备考计划','阶段拆解 · 周任务生成'],
+    practice:['行测刷题','记录练习 · 自动算正确率'],
+    mistakes:['错题本','录入 · 归类 · 重做'],
+    essay:['申论训练','题型训练 + 素材库'],
+    interview:['面试训练','题型分类 + 录音复盘'],
+    analytics:['数据分析','强弱项诊断 + 目标差距'],
+    career:['岗位研究','岗位库 + 进面线 + 报录比']
+  };
+  function route(){
+    var h=location.hash.replace(/^#\/?/,'')||'dashboard';
+    var valid=['dashboard','plan','practice','mistakes','essay','interview','analytics','career'];
+    if(valid.indexOf(h)<0)h='dashboard';
+    var pages=document.querySelectorAll('.page');
+    for(var i=0;i<pages.length;i++)pages[i].classList.toggle('active',pages[i].getAttribute('data-route')===h);
+    var navs=document.querySelectorAll('.nav-item');
+    for(var j=0;j<navs.length;j++)navs[j].classList.toggle('active',navs[j].getAttribute('href')==='#/'+h);
+    document.getElementById('page-title').textContent=TITLES[h][0];
+    document.getElementById('page-sub').textContent=TITLES[h][1];
+    renderAll();
+  }
+  window.addEventListener('hashchange',route);
+
+  /* ================= 渲染 ================= */
+  function renderAll(){
+    renderTop();
+    var active=null;
+    var pages=document.querySelectorAll('.page');
+    for(var i=0;i<pages.length;i++)if(pages[i].classList.contains('active'))active=pages[i].getAttribute('data-route');
+    if(active==='dashboard')renderDashboard();
+    if(active==='plan')renderPlan();
+    if(active==='practice')renderPractice();
+    if(active==='mistakes')renderMistakes();
+    if(active==='analytics')renderAnalytics();
+    if(active==='essay')renderEssay();
+  }
+  function renderTop(){
+    document.getElementById('cd-num').textContent=diffDays(state.settings.examDate);
+    document.getElementById('cd-target').textContent=state.settings.examName||'2026 国考笔试';
+    var done=state.checkins.indexOf(todayStr())>=0;
+    var btn=document.getElementById('btn-checkin');
+    btn.textContent=done?'今日已打卡':'今日打卡';
+    btn.disabled=done;
+    btn.className=done?'btn btn-success':'btn btn-primary';
+    document.getElementById('ci-title').textContent=done?'今日已打卡':'今日打卡';
+    document.getElementById('ci-sub').textContent='已连续打卡 '+calcStreak()+' 天'+(done?'，今天完成了':'，完成今日任务即打卡');
+  }
+
+  /* ---- 总览 ---- */
+  function renderDashboard(){
+    var kpi=document.getElementById('kpi-grid');
+    var streak=calcStreak();
+    var acc=avgAcc();
+    kpi.innerHTML=
+      '<div class="kpi"><div class="k-label">今日学习时长</div><div class="k-val">'+(state.todayMinutes/60).toFixed(1)+'<span style="font-size:14px">h</span></div><div class="k-sub">点下方"记录学习"累加</div></div>'+
+      '<div class="kpi"><div class="k-label">连续打卡</div><div class="k-val">'+streak+'<span style="font-size:14px">天</span></div><div class="k-sub">坚持就是胜利</div></div>'+
+      '<div class="kpi"><div class="k-label">本周刷题</div><div class="k-val">'+thisWeekQ()+'<span style="font-size:14px">题</span></div><div class="k-sub">近 7 天练习量</div></div>'+
+      '<div class="kpi"><div class="k-label">平均正确率</div><div class="k-val">'+acc.toFixed(1)+'<span style="font-size:14px">%</span></div><div class="k-sub">全模块加权</div></div>';
+
+    var bars=document.getElementById('module-bars'),html='',minMod='shuliang',minAcc=101;
+    Object.keys(state.practice).forEach(function(k){
+      var a=modAcc(k);
+      if(a<minAcc){minAcc=a;minMod=k;}
+      html+='<div class="bar-row"><div class="bar-label">'+MODS[k].name+'</div><div class="bar-track"><div class="bar-fill" style="width:'+a+'%"></div></div><div class="bar-val'+(a<60?'" style="color:var(--red)':'')+'">'+a+'%</div></div>';
+    });
+    bars.innerHTML=html;
+    document.getElementById('module-hint').textContent='建议：'+MODS[minMod].name+'正确率 '+minAcc+'% 为当前最大提分空间（目标 ≥70%）。';
+
+    renderTodos();
+    renderWeekChart();
+  }
+  function renderTodos(){
+    var list=document.getElementById('todo-list');
+    var undone=0;
+    state.todos.forEach(function(t){if(!t.done)undone++;});
+    document.getElementById('todo-count').textContent=undone+' 项未完成';
+    if(!state.todos.length){list.innerHTML='<div class="empty">暂无待办，添加一项或从今日计划导入</div>';return;}
+    var html='';
+    state.todos.forEach(function(t){
+      html+='<div class="todo'+(t.done?' done':'')+'">'+
+        '<div class="cb" data-act="td" data-id="'+t.id+'">✓</div>'+
+        '<span class="t-tag '+MODS[t.mod].cls+'">'+MODS[t.mod].name+'</span>'+
+        '<span class="t-text">'+esc(t.text)+'</span>'+
+        (t.manual?'<span class="t-meta">手动</span>':'<span class="t-meta">计划</span>')+
+        '<span class="t-del" data-act="tdel" data-id="'+t.id+'">✕</span></div>';
+    });
+    list.innerHTML=html;
+  }
+  function renderWeekChart(){
+    var svg=document.getElementById('week-chart');
+    var data=state.weekMinutes;
+    var sum=data.reduce(function(a,b){return a+b;},0);
+    document.getElementById('week-total').textContent='本周共 '+sum+' 分钟';
+    var bw=44,gap=38,baseX=48,baseY=150,maxH=110;
+    var s='<line x1="40" y1="150" x2="620" y2="150" stroke="#E4E3DD"/><line x1="40" y1="40" x2="40" y2="150" stroke="#E4E3DD"/>';
+    s+='<g font-size="11" fill="#5C6670">';
+    [0,90,180].forEach(function(v,i){s+='<text x="32" y="'+(150-i*55)+'" text-anchor="end">'+(i*1.5)+'h</text>';});
+    data.forEach(function(v,i){
+      var h=Math.max(4,v/180*110);
+      var x=baseX+i*(bw+gap);
+      s+='<text x="'+(x+bw/2)+'" y="168" text-anchor="middle" font-size="11" fill="#5C6670">'+WEEKDAYS[i][0]+'</text>';
+      s+='<rect x="'+x+'" y="'+(baseY-h)+'" width="'+bw+'" height="'+h+'" rx="6" fill="#3B6EF5"/>';
+    });
+    s+='</g>';
+    svg.innerHTML=s;
+  }
+
+  /* ---- 计划 ---- */
+  function renderPlan(){
+    document.getElementById('stage-select').value=state.stage;
+    var stages=document.querySelectorAll('.stage');
+    for(var i=0;i<stages.length;i++){
+      stages[i].classList.toggle('active',stages[i].getAttribute('data-stage')===state.stage);
+    }
+    document.getElementById('budget-workday').value=state.budget.workday;
+    document.getElementById('budget-weekend').value=state.budget.weekend;
+    var sn={base:'基础',strengthen:'强化',sprint:'冲刺'};
+    document.getElementById('week-note').textContent='当前阶段：'+sn[state.stage]+' · 共 7 天可编辑';
+    renderWeekTable();
+  }
+  function renderWeekTable(){
+    var tb=document.getElementById('week-table');
+    if(!state.week.length){tb.innerHTML='<tr><td class="empty" colspan="5" style="border:none;">尚未生成周任务，点击"一键生成本周任务"</td></tr>';return;}
+    var html='<tr><th style="width:56px;">日期</th><th>上午任务</th><th>下午任务</th><th>晚间任务</th><th style="width:64px;">完成</th></tr>';
+    state.week.forEach(function(w){
+      html+='<tr><td>'+w.day+'</td>'+
+        '<td><input data-w="'+w.day+'" data-f="am" value="'+esc(w.am)+'"></td>'+
+        '<td><input data-w="'+w.day+'" data-f="pm" value="'+esc(w.pm)+'"></td>'+
+        '<td><input data-w="'+w.day+'" data-f="eve" value="'+esc(w.eve)+'"></td>'+
+        '<td style="text-align:center;"><button class="btn btn-ghost btn-sm" data-wd="'+w.day+'">'+(w.done?'已完成':'标记完成')+'</button></td></tr>';
+    });
+    tb.innerHTML=html;
+  }
+
+  /* ---- 刷题 ---- */
+  function renderPractice(){
+    var grid=document.getElementById('mod-grid'),html='';
+    Object.keys(state.practice).forEach(function(k){
+      var p=state.practice[k],a=pct(p.q,p.c);
+      html+='<div class="mod" data-practicemod="'+k+'"><div class="m-name">'+MODS[k].name+'</div>'+
+        '<div class="m-rate'+(a<60?'" style="color:var(--red)':'')+'">'+a+'%</div>'+
+        '<div class="m-meta">已练 '+p.q+' 题 · 做对 '+p.c+' 题</div></div>';
+    });
+    grid.innerHTML=html;
+    var log=document.getElementById('pr-log');
+    if(!state.practiceLog.length){log.innerHTML='<div class="empty">暂无练习记录，记录一次练习试试</div>';return;}
+    var lh='<table><tr><th>日期</th><th>模块</th><th>题数</th><th>做对</th><th>正确率</th></tr>';
+    state.practiceLog.slice(0,10).forEach(function(l){
+      lh+='<tr><td>'+l.date+'</td><td>'+MODS[l.mod].name+'</td><td>'+l.total+'</td><td>'+l.correct+'</td><td class="'+(l.correct/l.total>=0.7?'up':'down')+'">'+pct(l.total,l.correct)+'%</td></tr>';
+    });
+    log.innerHTML=lh+'</table>';
+  }
+
+  /* ---- 错题 ---- */
+  var mkFilter='all';
+  function renderMistakes(){
+    var stats=document.getElementById('mistake-stats');
+    var total=state.mistakes.length,open=0;
+    state.mistakes.forEach(function(m){if(!m.solved)open++;});
+    stats.innerHTML=
+      '<div class="stat-card"><div class="s-label">累计错题</div><div class="s-val">'+total+'</div></div>'+
+      '<div class="stat-card"><div class="s-label">待重做</div><div class="s-val" style="color:var(--orange)">'+open+'</div></div>'+
+      '<div class="stat-card"><div class="s-label">已解决</div><div class="s-val" style="color:var(--green)">'+(total-open)+'</div></div>';
+
+    var fl=document.getElementById('mk-filter');
+    var cats=[['all','全部'],['changshi','常识'],['yanyu','言语'],['shuliang','数量'],['panduan','判断'],['ziliao','资料'],['shenlun','申论']];
+    fl.innerHTML=cats.map(function(c){
+      return '<span class="f'+(mkFilter===c[0]?' on':'')+'" data-mkf="'+c[0]+'">'+c[1]+'</span>';
+    }).join('');
+    document.getElementById('mk-count').textContent=state.mistakes.length+' 条';
+
+    var list=document.getElementById('mk-list');
+    var items=state.mistakes.filter(function(m){return mkFilter==='all'||m.mod===mkFilter;});
+    if(!items.length){list.innerHTML='<div class="empty">该分类下暂无错题</div>';return;}
+    var html='';
+    items.forEach(function(m){
+      html+='<div class="mistake">'+
+        '<div class="m-top"><div class="m-q">'+esc(m.q||'(未填题干)')+'</div>'+
+        '<div class="m-actions">'+(m.solved?'<span class="m-tag m-solved">已解决</span>':'<button class="retry-btn" data-mk="'+m.id+'">标记解决</button>')+
+        '<button class="del-btn" data-mkd="'+m.id+'">删除</button></div></div>'+
+        '<div class="m-tags"><span class="m-tag '+MODS[m.mod].cls+'">'+MODS[m.mod].name+' · '+esc(m.kp||'未分类')+'</span>'+
+        '<span class="m-tag m-'+m.reason+'">错因：'+REASONS[m.reason]+'</span>'+
+        '<span class="m-tag">'+m.date+'</span></div></div>';
+    });
+    list.innerHTML=html;
+  }
+
+  /* ---- 数据分析 ---- */
+  function renderAnalytics(){
+    var bars=document.getElementById('an-bars'),html='',order=[],minMod='shuliang',minAcc=101;
+    Object.keys(state.practice).forEach(function(k){
+      var a=modAcc(k);order.push({k:k,a:a});
+      if(a<minAcc){minAcc=a;minMod=k;}
+      html+='<div class="bar-row"><div class="bar-label">'+MODS[k].name+'</div><div class="bar-track"><div class="bar-fill" style="width:'+a+'%"></div></div><div class="bar-val'+(a<60?'" style="color:var(--red)':'')+'">'+a+'%</div></div>';
+    });
+    bars.innerHTML=html;
+    order.sort(function(x,y){return x.a-y.a;});
+    var w=document.getElementById('an-weak'),wh='';
+    order.slice(0,3).forEach(function(o,i){
+      wh+='<div class="weak"><div class="w-idx'+(i===2?' w3':(i===1?' w2':''))+'">'+(i+1)+'</div>'+
+        '<div class="w-name">'+MODS[o.k].name+'</div><div class="w-acc">'+o.a+'%</div></div>';
+    });
+    w.innerHTML=wh;
+    var q=0,c=0;
+    Object.keys(state.practice).forEach(function(k){q+=state.practice[k].q;c+=state.practice[k].c;});
+    document.getElementById('an-total').textContent='累计练习 '+q+' 题';
+    document.getElementById('an-gap').textContent=(70-minAcc).toFixed(1)+' 分';
+    document.getElementById('an-gap-sub').textContent=MODS[minMod].name+'距 70% 目标差 '+(70-minAcc).toFixed(1)+'%，建议优先补强';
+
+    var svg=document.getElementById('an-week');
+    var sums={};
+    state.practiceLog.forEach(function(l){
+      var d=new Date(l.date+'T00:00:00'),now=new Date();
+      var diff=Math.floor((now-d)/86400000);
+      if(diff>=0&&diff<7)sums[l.date]=(sums[l.date]||0)+l.total;
+    });
+    var data=[];
+    for(var i=6;i>=0;i--){var ds=daysAgoStr(i);data.push(sums[ds]||0);}
+    var mx=Math.max.apply(null,data.concat([1]));
+    var bw=44,gap=38,baseX=48,baseY=150,maxH=110;
+    var s='<line x1="40" y1="150" x2="620" y2="150" stroke="#E4E3DD"/><line x1="40" y1="40" x2="40" y2="150" stroke="#E4E3DD"/>';
+    s+='<g font-size="11" fill="#5C6670">';
+    data.forEach(function(v,j){
+      var h=Math.max(4,v/mx*110);
+      var x=baseX+j*(bw+gap);
+      s+='<text x="'+(x+bw/2)+'" y="168" text-anchor="middle">'+(daysAgoStr(6-j).slice(5).replace('-','/'))+'</text>';
+      s+='<rect x="'+x+'" y="'+(baseY-h)+'" width="'+bw+'" height="'+h+'" rx="6" fill="#9BBBF4"/>';
+      s+='<text x="'+(x+bw/2)+'" y="'+(baseY-h-5)+'" text-anchor="middle" font-size="10" fill="#5C6670">'+v+'</text>';
+    });
+    s+='</g>';
+    svg.innerHTML=s;
+  }
+
+  /* ---- 申论素材 ---- */
+  function renderEssay(){
+    var grid=document.getElementById('mat-grid');
+    if(!state.mats.length){grid.innerHTML='<div class="empty">素材库为空，添加一条素材</div>';return;}
+    var cats=['金句','政策','案例','时政'];
+    grid.innerHTML=cats.map(function(cat){
+      var items=state.mats.filter(function(m){return m.cat===cat;});
+      var inner=items.length?items.map(function(m){
+        return '<div style="font-size:12px;color:var(--text2);margin-top:6px;line-height:1.5;">'+esc(m.text)+'</div>';
+      }).join(''):'<div style="font-size:12px;color:#AEB4BC;margin-top:6px;">暂无</div>';
+      return '<div class="mat"><div class="m-title">'+cat+'</div>'+inner+'</div>';
+    }).join('');
+  }
+
+  /* ================= 事件 ================= */
+  document.addEventListener('click',function(e){
+    var t=e.target;
+
+    if(t.id==='btn-checkin'){
+      var d=todayStr();
+      if(state.checkins.indexOf(d)<0){state.checkins.push(d);save();renderAll();toast('打卡成功，已连续 '+calcStreak()+' 天');}
+    }
+    if(t.getAttribute('data-act')==='td'){
+      var id=Number(t.getAttribute('data-id'));
+      state.todos.forEach(function(x){if(x.id===id)x.done=!x.done;});
+      save();renderTodos();
+    }
+    if(t.getAttribute('data-act')==='tdel'){
+      var did=Number(t.getAttribute('data-id'));
+      state.todos=state.todos.filter(function(x){return x.id!==did;});
+      save();renderTodos();
+    }
+    if(t.getAttribute('data-practicemod')){
+      toast('可在上方表单记录该模块的练习');
+    }
+    if(t.getAttribute('data-mkf')){mkFilter=t.getAttribute('data-mkf');renderMistakes();}
+    if(t.getAttribute('data-mk')){
+      var mid=Number(t.getAttribute('data-mk'));
+      state.mistakes.forEach(function(m){if(m.id===mid)m.solved=true;});
+      save();renderMistakes();toast('已标记解决');
+    }
+    if(t.getAttribute('data-mkd')){
+      var mdid=Number(t.getAttribute('data-mkd'));
+      state.mistakes=state.mistakes.filter(function(m){return m.id!==mdid;});
+      save();renderMistakes();toast('已删除');
+    }
+    if(t.getAttribute('data-wd')){
+      var wd=t.getAttribute('data-wd');
+      state.week.forEach(function(w){if(w.day===wd)w.done=!w.done;});
+      save();renderWeekTable();
+    }
+    if(t.id==='btn-add-todo'){
+      var inp=document.getElementById('todo-input'),txt=inp.value.trim();
+      if(!txt){toast('请输入待办内容');return;}
+      state.todos.push({id:nid(),text:txt,mod:document.getElementById('todo-mod').value,done:false,manual:true});
+      inp.value='';save();renderTodos();toast('已添加待办');
+    }
+    if(t.id==='btn-import-todo'){
+      var todayIdx=new Date().getDay();
+      todayIdx=(todayIdx===0?6:todayIdx-1);
+      var w=state.week[todayIdx];
+      if(!w){toast('请先在"备考计划"生成周任务');return;}
+      var added=0;
+      [['am','上午：'],['pm','下午：'],['eve','晚间：']].forEach(function(pair){
+        var v=w[pair[0]];
+        if(v){
+          var exists=state.todos.some(function(x){return x.text===pair[1]+v&&x.manual;});
+          if(!exists){state.todos.push({id:nid(),text:pair[1]+v,mod:'shenlun',done:false,manual:true});added++;}
+        }
+      });
+      save();renderTodos();toast(added?'已导入 '+added+' 项今日任务':'今日计划已导入过');
+    }
+    if(t.id==='btn-gen-week'){genWeek();toast('已按当前阶段生成本周任务');}
+    if(t.id==='btn-log-practice'){
+      var total=Number(document.getElementById('pr-total').value);
+      var correct=Number(document.getElementById('pr-correct').value);
+      var mod=document.getElementById('pr-mod').value;
+      if(!total||isNaN(correct)||correct<0||correct>total){toast('请填写有效的题数与做对题数');return;}
+      state.practice[mod].q+=total;state.practice[mod].c+=correct;
+      state.practiceLog.unshift({date:todayStr(),mod:mod,total:total,correct:correct});
+      document.getElementById('pr-total').value='';document.getElementById('pr-correct').value='';
+      save();renderPractice();renderTop();toast('已记录练习，'+MODS[mod].name+'正确率更新为 '+modAcc(mod)+'%');
+    }
+    if(t.id==='btn-add-mistake'){
+      var q=document.getElementById('mk-q').value.trim();
+      var kp=document.getElementById('mk-kp').value.trim();
+      if(!q){toast('请填写错题内容');return;}
+      state.mistakes.unshift({id:nid(),date:todayStr(),mod:document.getElementById('mk-mod').value,kp:kp,reason:document.getElementById('mk-reason').value,solved:false});
+      document.getElementById('mk-q').value='';document.getElementById('mk-kp').value='';
+      save();renderMistakes();toast('已加入错题本');
+    }
+    if(t.id==='btn-add-mat'){
+      var mt=document.getElementById('mat-text').value.trim();
+      if(!mt){toast('请输入素材内容');return;}
+      state.mats.push({id:nid(),cat:document.getElementById('mat-cat').value,text:mt});
+      document.getElementById('mat-text').value='';
+      save();renderEssay();toast('素材已保存');
+    }
+    if(t.id==='btn-add-30'){state.todayMinutes+=30;save();renderDashboard();toast('已记录 30 分钟学习');}
+  });
+
+  document.addEventListener('change',function(e){
+    var t=e.target;
+    if(t.getAttribute('data-w')){
+      var wd=t.getAttribute('data-w'),f=t.getAttribute('data-f');
+      state.week.forEach(function(w){if(w.day===wd)w[f]=t.value;});
+      save();
+    }
+    if(t.id==='stage-select'){
+      state.stage=t.value;save();renderPlan();
+      var sn={base:'基础',strengthen:'强化',sprint:'冲刺'};
+      toast('已切换到'+sn[t.value]+'阶段，可重新生成周任务');
+    }
+    if(t.id==='budget-workday'){state.budget.workday=Number(t.value)||3;save();}
+    if(t.id==='budget-weekend'){state.budget.weekend=Number(t.value)||6;save();}
+  });
+
+  /* ================= 岗位研究 ================= */
+  function renderCareer(){
+    var grid=document.getElementById('job-grid');
+    if(!grid)return;
+    grid.innerHTML=
+      '<div class="job"><div class="j-name">南京市税务局 · 一级行政执法员</div>'+
+      '<div class="j-tags"><span class="j-tag">2026 国考</span><span class="j-tag">招 3 人</span></div>'+
+      '<div class="j-rows">历年进面线：<b>约 135 分</b><br>报名人数：<b>约 420 人</b> · 报录比 <b>1:140</b><br>学历要求：本科及以上<br><span style="color:var(--orange)">当前目标 135 / 进面 135</span></div></div>'+
+      '<div class="job"><div class="j-name">南京市某区市场监督管理局</div>'+
+      '<div class="j-tags"><span class="j-tag">2026 省考</span><span class="j-tag">招 5 人</span></div>'+
+      '<div class="j-rows">历年进面线：<b>约 128 分</b><br>报名人数：<b>约 350 人</b> · 报录比 <b>1:70</b><br>学历要求：本科及以上<br><span style="color:var(--green)">目标达标 ✓</span></div></div>'+
+      '<div class="job"><div class="j-name">某市直事业单位 · 综合岗</div>'+
+      '<div class="j-tags"><span class="j-tag">事业编</span><span class="j-tag">招 8 人</span></div>'+
+      '<div class="j-rows">历年进面线：<b>约 72 分（百分制）</b><br>报名人数：<b>约 480 人</b> · 报录比 <b>1:60</b><br><span style="color:var(--green)">匹配度：备考中</span></div></div>';
+  }
+
+  load();
+  if(!state.week.length)genWeek();
+  renderCareer();
+  route();
+})();
+</script>
+</body>
+</html>
