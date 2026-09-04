@@ -7,17 +7,22 @@ export type ListQuestionsInput = {
   module?: string;
   difficulty?: number;
   tags?: string[];
+  search?: string;
   page?: number;
   pageSize?: number;
 };
 
 export async function listQuestions(input: ListQuestionsInput = {}) {
-  const { examId, module, difficulty, tags, page = 1, pageSize = 20 } = input;
+  const { examId, module, difficulty, tags, search, page = 1, pageSize = 20 } = input;
   const where: Prisma.QuestionWhereInput = {};
   if (examId) where.examId = examId;
   if (module) where.module = module;
   if (difficulty) where.difficulty = difficulty;
   if (tags?.length) where.tags = { hasSome: tags };
+  // 关键词搜索：在题干 stem 里做 case-insensitive contains
+  if (search && search.trim()) {
+    where.stem = { contains: search.trim(), mode: "insensitive" };
+  }
 
   const [items, total] = await Promise.all([
     prisma.question.findMany({

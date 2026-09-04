@@ -17,4 +17,15 @@ describe("judge", () => {
   it("大小写不敏感", () => {
     expect(judge("单选", "a", "A")).toBe(true);
   });
+  it("去标点和空格", () => {
+    // 多写一个句号 / 逗号 / 空格不应该判错
+    expect(judge("多选", "BCD.", "BCD")).toBe(true);
+    expect(judge("多选", "B,C,D", "BCD")).toBe(true);
+    expect(judge("多选", "B CD", "BCD")).toBe(true);
+    expect(judge("多选", "【BCD】", "BCD")).toBe(true);
+  });
+  it("极端：用户输入全是标点视为空", () => {
+    expect(judge("单选", "..", "A")).toBe(false);
+    expect(judge("单选", "", "A")).toBe(false);
+  });
 });

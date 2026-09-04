@@ -6,7 +6,9 @@ import { cn } from "@/lib/utils";
 
 const MODULES = ["常识", "言语", "数量", "判断", "资料"] as const;
 
-type SearchParams = { module?: string; page?: string };
+type SearchParams = { module?: string; page?: string; q?: string };
+
+const SEARCH_ENABLE_THRESHOLD = 500;
 
 export default async function QuestionsPage({
   searchParams,
@@ -17,16 +19,19 @@ export default async function QuestionsPage({
   const params =
     searchParams instanceof Promise ? await searchParams : searchParams;
   const module = params.module;
+  const q = params.q ?? "";
   const page = Math.max(1, Number(params.page ?? 1) || 1);
   const pageSize = 20;
 
   const { items, total } = await listQuestions({
     module,
+    search: q,
     page,
     pageSize,
   });
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const searchEnabled = total > SEARCH_ENABLE_THRESHOLD || q.length > 0;
 
   return (
     <div className="p-4 max-w-3xl mx-auto">
@@ -57,10 +62,20 @@ export default async function QuestionsPage({
             </option>
           ))}
         </select>
+        {searchEnabled && (
+          <input
+            id="q-input"
+            name="q"
+            type="search"
+            defaultValue={q}
+            placeholder="搜索题干关键词…"
+            className="border rounded px-2 py-1 text-sm bg-background min-w-32"
+          />
+        )}
         <Button type="submit" variant="outline" size="sm">
           筛选
         </Button>
-        {module && (
+        {(module || q) && (
           <Link
             href="/questions"
             className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}

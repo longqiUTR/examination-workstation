@@ -45,6 +45,7 @@ export default async function MistakeRedoPage({
       sessionId={study.id}
       initialNote={wrong?.notes ?? ""}
       enableNotes
+      enableForceMaster={!wrong?.mastered}
     />
   );
 }

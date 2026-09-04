@@ -7,6 +7,18 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { aggregateDaily } from "@/lib/stats";
 
+function timeAgo(date: Date): string {
+  const diff = Date.now() - new Date(date).getTime();
+  const min = Math.floor(diff / 60_000);
+  if (min < 1) return "刚刚";
+  if (min < 60) return `${min} 分钟前`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr} 小时前`;
+  const day = Math.floor(hr / 24);
+  if (day < 30) return `${day} 天前`;
+  return new Date(date).toISOString().slice(0, 10);
+}
+
 export default async function HomePage() {
   const session = await auth();
   if (!session?.user?.id) {
@@ -33,7 +45,7 @@ export default async function HomePage() {
   );
   const tomorrowUtc = new Date(todayUtc.getTime() + 86400000);
 
-  const [todayTasks, todayAttempts, recentWrong, activePlans, weekAttempts] =
+  const [todayTasks, todayAttempts, recentWrong, activePlans, weekAttempts, recentAttempts] =
     await Promise.all([
       prisma.planTask.findMany({
         where: {
@@ -56,6 +68,14 @@ export default async function HomePage() {
           createdAt: { gte: new Date(Date.now() - 7 * 86400000) },
         },
         select: { isCorrect: true, createdAt: true, question: { select: { module: true } } },
+      }),
+      prisma.attempt.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        include: {
+          question: { select: { id: true, module: true, stem: true } },
+        },
       }),
     ]);
 
@@ -185,6 +205,37 @@ export default async function HomePage() {
                 </Card>
               );
             })}
+          </div>
+        )}
+      </section>
+
+      <section>
+        <h2 className="text-lg font-bold mb-2">最近答题</h2>
+        {recentAttempts.length === 0 ? (
+          <Card className="p-4 text-muted-foreground text-sm">
+            还没有答题记录。<Link href="/practice/new" className="text-primary underline ml-1">去练习</Link>
+          </Card>
+        ) : (
+          <div className="space-y-2">
+            {recentAttempts.map((a) => (
+              <Link key={a.id} href={`/questions/${a.question.id}`}>
+                <Card className="p-3 hover:bg-accent flex items-center gap-3">
+                  <Badge
+                    variant={a.isCorrect ? "secondary" : "destructive"}
+                    className="shrink-0 w-12 justify-center"
+                  >
+                    {a.isCorrect ? "✓ 对" : "✗ 错"}
+                  </Badge>
+                  <Badge variant="outline" className="shrink-0">{a.question.module}</Badge>
+                  <p className="text-sm line-clamp-1 flex-1 min-w-0">
+                    {a.question.stem}
+                  </p>
+                  <span className="text-xs text-muted-foreground shrink-0">
+                    {timeAgo(a.createdAt)}
+                  </span>
+                </Card>
+              </Link>
+            ))}
           </div>
         )}
       </section>

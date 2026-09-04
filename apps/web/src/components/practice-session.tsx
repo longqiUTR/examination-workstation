@@ -1,15 +1,20 @@
 "use client";
 import { useState, useTransition, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { submitAnswer } from "@/server/actions/attempt";
-import { saveNote } from "@/server/actions/wrong";
+import { saveNote, forceMaster } from "@/server/actions/wrong";
 import { cacheQuestion, isOfflineMode } from "@/lib/question-cache";
 import { enqueue } from "@/lib/outbox";
 import { judge, type QuestionType } from "@/lib/judge";
+import { MAX_NOTE_LENGTH } from "@/lib/notes";
 import { cn } from "@/lib/utils";
+
+const NOTE_CLIENT_MAX = 2000; // 客户端硬限（比服务端 5000 严格），避免误粘贴
 
 type Option = { key: string; value: string };
 type QuestionLite = {
@@ -34,12 +39,15 @@ export function PracticeSession({
   sessionId,
   initialNote = "",
   enableNotes = false,
+  enableForceMaster = false,
 }: {
   questions: QuestionLite[];
   sessionId: string;
   initialNote?: string;
   enableNotes?: boolean;
+  enableForceMaster?: boolean;
 }) {
+  const router = useRouter();
   const [idx, setIdx] = useState(0);
   const [selected, setSelected] = useState<string>("");
   const [result, setResult] = useState<Result | null>(null);
@@ -49,6 +57,9 @@ export function PracticeSession({
   const [note, setNote] = useState<string>(initialNote);
   const [noteMsg, setNoteMsg] = useState<string | null>(null);
   const [notePending, setNotePending] = useState(false);
+  const [forceOpen, setForceOpen] = useState(false);
+  const [forcePending, setForcePending] = useState(false);
+  const [forceErr, setForceErr] = useState<string | null>(null);
 
   // 切题时重置并重新计时
   useEffect(() => {
@@ -177,6 +188,10 @@ export function PracticeSession({
 
   async function handleSaveNote() {
     setNoteMsg(null);
+    if (note.length > NOTE_CLIENT_MAX) {
+      setNoteMsg(`笔记超过 ${NOTE_CLIENT_MAX} 字限制（当前 ${note.length}）`);
+      return;
+    }
     setNotePending(true);
     try {
       await saveNote(q.id, note);
@@ -185,6 +200,20 @@ export function PracticeSession({
       setNoteMsg(e instanceof Error ? e.message : "保存失败");
     } finally {
       setNotePending(false);
+    }
+  }
+
+  async function handleForceMaster() {
+    setForceErr(null);
+    setForcePending(true);
+    try {
+      await forceMaster(q.id);
+      setForceOpen(false);
+      router.push("/mistakes");
+    } catch (e) {
+      setForceErr(e instanceof Error ? e.message : "操作失败");
+    } finally {
+      setForcePending(false);
     }
   }
 
@@ -286,23 +315,47 @@ export function PracticeSession({
               <h4 className="font-bold mb-2">我的笔记</h4>
               <textarea
                 value={note}
-                onChange={(e) => setNote(e.target.value)}
+                onChange={(e) => setNote(e.target.value.slice(0, NOTE_CLIENT_MAX))}
                 placeholder="写下你的理解/易错点..."
+                maxLength={NOTE_CLIENT_MAX}
                 className="w-full min-h-24 rounded border border-input bg-transparent p-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
               />
-              <div className="flex items-center gap-2 mt-2">
-                <Button
-                  size="sm"
-                  onClick={handleSaveNote}
-                  disabled={notePending}
+              <div className="flex items-center justify-between mt-2 gap-2">
+                <span
+                  className={cn(
+                    "text-xs",
+                    note.length > NOTE_CLIENT_MAX * 0.9
+                      ? "text-destructive"
+                      : "text-muted-foreground"
+                  )}
                 >
-                  {notePending ? "保存中…" : "保存笔记"}
-                </Button>
-                {noteMsg && (
-                  <span className="text-xs text-muted-foreground">{noteMsg}</span>
-                )}
+                  {note.length} / {NOTE_CLIENT_MAX}（服务端上限 {MAX_NOTE_LENGTH}）
+                </span>
+                <div className="flex items-center gap-2">
+                  {noteMsg && (
+                    <span className="text-xs text-muted-foreground">{noteMsg}</span>
+                  )}
+                  <Button
+                    size="sm"
+                    onClick={handleSaveNote}
+                    disabled={notePending}
+                  >
+                    {notePending ? "保存中…" : "保存笔记"}
+                  </Button>
+                </div>
               </div>
             </Card>
+          )}
+
+          {enableForceMaster && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setForceOpen(true)}
+              className="w-full"
+            >
+              ⚡ 强制标记掌握
+            </Button>
           )}
 
           <Button onClick={handleNext} className="w-full">
@@ -310,6 +363,35 @@ export function PracticeSession({
           </Button>
         </>
       )}
+
+      <Dialog open={forceOpen} onOpenChange={setForceOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>强制标记为已掌握？</DialogTitle>
+            <DialogDescription>
+              会跳过"答对 3 次"门槛，立刻把这道错题从未掌握列表移除。该操作不可撤销（只能答错后再次进入错题本）。
+            </DialogDescription>
+          </DialogHeader>
+          {forceErr && <p className="text-sm text-destructive">{forceErr}</p>}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setForceOpen(false)}
+              disabled={forcePending}
+            >
+              取消
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleForceMaster}
+              disabled={forcePending}
+            >
+              {forcePending ? "处理中…" : "确认标记掌握"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
