@@ -14,3 +14,6 @@ coverage/
 # 一次性手写 apply helper（内容已合并到 packages/db/prisma/migrations/，见 20260904034900_add_username_password）
 scripts/apply-migration*.sql
 scripts/test-signin.mjs
+
+# commit message 草稿（用 write 工具绕过 PowerShell -m 字符串拆分）
+notes/
