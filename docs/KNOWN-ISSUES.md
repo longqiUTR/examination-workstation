@@ -33,13 +33,13 @@
 - **现象**：选 `B` 和选 `b`、`BD` 和 `DB` 算对；但 `BCD` 和 `BCD.` 算错（normalize 不去标点）
 - **影响**：极小（用户输入基本都规范）
 - **计划**：v1.1 改 `judge` 函数加 strip
-- **状态**：已记录，v1.1 修
+- **状态**：✅ **v1.1 修复** — `lib/judge.ts` normalize 加 `replace(/[^A-Z]/g,"")`，6 个 case 全过
 
 ### [P1-003] `wrong.notes` 没有字数限制
 - **现象**：用户可以粘贴一个超长笔记
 - **影响**：UI 列表页可能变形
 - **计划**：v1.1 加客户端 2000 字限制 + 服务端 5000 字限制
-- **状态**：已记录
+- **状态**：✅ **v1.1 修复** — 客户端 `maxLength={2000}` + 实时计数（90% 阈值变红），服务端 `saveNote` throw 5000 字硬限
 
 ---
 
@@ -49,13 +49,13 @@
 - **现象**：想看刚才答的题要在题库里翻
 - **影响**：v1 spec 没要求
 - **计划**：v1.1 在 Dashboard 加"最近 5 题"卡片（从 Attempt 查）
-- **状态**：已记录
+- **状态**：✅ **v1.1 修复** — 首页新增"最近答题" section，对/错 Badge + 模块 + 题干 + `timeAgo` 时间
 
 ### [P2-002] 错题本没有"按模块筛选"快捷按钮
 - **现象**：模块筛选要展开 dropdown
 - **影响**：移动端 dropdown 略难用
 - **计划**：v1.1 改为横向滚动 chip
-- **状态**：已记录
+- **状态**：✅ **v1.1 修复** — `/mistakes` 加横向滚动模块 chip（带未掌握数角标），掌握状态 chip 单独一行
 
 ### [P2-003] 计划详情页没有"复制到下周"功能
 - **现象**：每周都要重新建计划
@@ -67,13 +67,13 @@
 - **现象**：题目多了找不到
 - **影响**：v1 数据量小，5 模块各 20 题 100 题不需要
 - **计划**：v1.1 加题数 > 500 时启用
-- **状态**：已记录
+- **状态**：✅ **v1.1 修复** — `listQuestions` 加 `search` 参数（stem contains insensitive），`/questions` 在 total>500 或已有 q 时显示搜索框
 
 ### [P2-005] 错题重做页没有"标记已掌握"按钮
 - **现象**：要答对 3 次才自动掌握，等不及
 - **影响**：想快速标掌握需要手动 SQL（不可能）
 - **计划**：v1.1 加"强制标记掌握"按钮，**需要二次确认**
-- **状态**：已记录
+- **状态**：✅ **v1.1 修复** — `forceMaster` server action + 二次确认 Dialog，仅未掌握题目显示按钮
 
 ---
 
@@ -124,7 +124,14 @@
 
 | Issue | 修复版本 | 修复 commit | 备注 |
 |---|---|---|---|
-| - | - | - | （v1.1 polish 时开始填） |
+| [P1-002] judge 去标点 | v1.1 | fix(web): v1.1 polish batch 1 - 6 issues | `replace(/[^A-Z]/g,"")` |
+| [P1-003] 错题笔记字数限制 | v1.1 | fix(web): v1.1 polish batch 1 - 6 issues | 客户端 2000 + 服务端 5000 |
+| [P2-001] Dashboard 最近 5 题 | v1.1 | fix(web): v1.1 polish batch 1 - 6 issues | `timeAgo` + Attempt 查询 |
+| [P2-002] 错题模块 chip | v1.1 | fix(web): v1.1 polish batch 1 - 6 issues | 顺手修 searchParams Promise 同步 |
+| [P2-004] 题库搜索框 | v1.1 | fix(web): v1.1 polish batch 1 - 6 issues | total>500 条件渲染 |
+| [P2-005] 强制标记掌握 | v1.1 | fix(web): v1.1 polish batch 1 - 6 issues | Dialog 二次确认 + forceMaster action |
+| [Plan bug] Task 1.4 漏 3 张 Auth 表 | v1.1 | feat(db): Auth.js v5 PrismaAdapter 必需表 | Account / Session / VerificationToken |
+| [Plan bug] Task 1.5 邮箱魔法链接太重 | v1.1 | feat(web): 登录改 Credentials + username/password | v1 自用先简化 |
 
 ---
 

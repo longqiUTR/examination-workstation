@@ -370,6 +370,8 @@ git add .
 git commit -m "feat(db): Prisma schema + 客户端 (User/Exam/Question/Attempt/WrongQuestion/StudySession/Plan/PlanTask)"
 ```
 
+> **v1.1 补记**：原 plan 漏列 Auth.js v5 PrismaAdapter 必需的 3 张表（Account / Session / VerificationToken）。v1.1 已补 migration `20260904033456_add_auth_tables`。后续如果用 Nodemailer 回切邮件登录，Account 表可直接复用 OAuth provider 字段。
+
 ---
 
 ## Task 1.5：Auth.js v5 + 邮箱魔法链接
@@ -448,6 +450,13 @@ export default function LoginPage() {
 git add .
 git commit -m "feat(web): Auth.js v5 + 邮箱魔法链接登录"
 ```
+
+> **v1.1 调整**：邮箱魔法链接对单用户自用场景太重（要配 SMTP 凭据、发件域名、点链接进邮箱）。v1.1 改为 **Credentials + username/password**：
+> - `User` 加 `username` (unique) + `passwordHash`，`email` 改 nullable（保留字段未来可回切 Nodemailer）
+> - `lib/password.ts`：Node 内置 scrypt 慢哈希（不引入 bcrypt 依赖）
+> - `lib/auth.ts`：CredentialsProvider + `session.strategy = "jwt"`（Credentials 强制）
+> - `app/(auth)/login/page.tsx`：登录/注册 toggle（注册带确认密码）
+> - 邮箱验证 / 找回密码延后到 v1.2+（表结构已留好 `email` 字段可复用）
 
 ---
 

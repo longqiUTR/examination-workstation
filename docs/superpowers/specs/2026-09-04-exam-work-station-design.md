@@ -575,6 +575,16 @@ packages/importer/src/fenbi-import.ts
 
 > 所有待定项已决。如 v1 后期有变动，再开 issue 讨论。
 
+### 14.1 v1.1 实际决策（与原 spec 偏差，已落地）
+
+- **登录方式**：从"邮箱魔法链接"改为"用户名 + 密码（Credentials）"
+  - 原因：单用户自用场景，邮箱验证要配 SMTP 凭据 / 发件域名 / 用户点邮箱链接，复杂度高
+  - 表结构：`User.email` 改 nullable（保留字段），新增 `username` (unique) + `passwordHash`
+  - 回切路径：未来要支持邮箱登录时，直接加 Nodemailer provider 即可，`Account` / `Session` / `VerificationToken` 三表 schema 已就位（v1.1 补齐）
+- **Prisma schema 补表**：原 §6.1 漏列 Auth.js v5 PrismaAdapter 必需的 `Account` / `Session` / `VerificationToken`，v1.1 已加（migration `20260904033456_add_auth_tables`）
+- **v1.1 polish 6 项修复**：见 `docs/KNOWN-ISSUES.md` 修复记录
+- **题库占位数据**：`packages/db/seed-data/guokao-2024/*.json` 当前是 placeholder（"干扰项A / 正确选项D" 字样），需替换为真真题。Task 5.6 未完成。
+
 ---
 
 ## 15. 参考
